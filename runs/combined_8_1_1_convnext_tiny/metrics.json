@@ -1,0 +1,42 @@
+{
+  "device": "cuda",
+  "best_val_auc": 1.0,
+  "validation": {
+    "threshold": 0.1756264567375183,
+    "accuracy": 1.0,
+    "roc_auc": 1.0,
+    "f1": 1.0,
+    "precision": 1.0,
+    "sensitivity": 1.0,
+    "specificity": 1.0,
+    "confusion_matrix": [
+      [
+        29,
+        0
+      ],
+      [
+        0,
+        23
+      ]
+    ]
+  },
+  "test": {
+    "threshold": 0.1756264567375183,
+    "accuracy": 0.9622641509433962,
+    "roc_auc": 1.0,
+    "f1": 0.9523809523809523,
+    "precision": 0.9090909090909091,
+    "sensitivity": 1.0,
+    "specificity": 0.9393939393939394,
+    "confusion_matrix": [
+      [
+        31,
+        2
+      ],
+      [
+        0,
+        20
+      ]
+    ]
+  }
+}

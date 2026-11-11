@@ -29,6 +29,16 @@ checkpoints/
 *.safetensors
 *.log
 
+# 最终数据集和最终实验结果需要提交到 GitHub
+!dataset_combined/
+!dataset_combined/**
+!runs/
+!runs/combined_8_1_1_convnext_tiny/
+!runs/combined_8_1_1_convnext_tiny/**
+!runs/combined_8_1_1_convnext_tiny/test/
+!runs/combined_8_1_1_convnext_tiny/test/**
+runs/combined_8_1_1_convnext_tiny/best.pt
+
 # 原始压缩包和大型二进制文件
 *.zip
 *.rar

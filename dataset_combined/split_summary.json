@@ -1,0 +1,66 @@
+{
+  "seed": 20261110,
+  "method": "merge_then_random_shuffle_by_image",
+  "ratios_requested": {
+    "train": 0.8,
+    "val": 0.1,
+    "test": 0.1
+  },
+  "total_images": 524,
+  "counts": {
+    "train": {
+      "total": 419,
+      "batch": {
+        "batch1": 331,
+        "batch2": 88
+      },
+      "binary": {
+        "normal": 218,
+        "diseased": 201
+      },
+      "fine": {
+        "阴性": 185,
+        "阳性": 54,
+        "强阳性": 96,
+        "弱阳性": 51,
+        "假阳性": 33
+      }
+    },
+    "val": {
+      "total": 52,
+      "batch": {
+        "batch2": 7,
+        "batch1": 45
+      },
+      "binary": {
+        "normal": 29,
+        "diseased": 23
+      },
+      "fine": {
+        "阴性": 21,
+        "强阳性": 14,
+        "假阳性": 8,
+        "阳性": 4,
+        "弱阳性": 5
+      }
+    },
+    "test": {
+      "total": 53,
+      "batch": {
+        "batch1": 42,
+        "batch2": 11
+      },
+      "binary": {
+        "normal": 33,
+        "diseased": 20
+      },
+      "fine": {
+        "阴性": 28,
+        "阳性": 8,
+        "假阳性": 5,
+        "强阳性": 9,
+        "弱阳性": 3
+      }
+    }
+  }
+}
