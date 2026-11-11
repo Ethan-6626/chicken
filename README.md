@@ -145,19 +145,4 @@ cd /home/ke/shupj/antigen_binary_experiment
 
 详细说明见 [report.md](report.md)。
 
-## 重要限制
 
-本次最终数据集采用图片级随机划分，同一原始大图产生的裁片可能进入不同集合，因此结果可能受到相似图片泄漏影响。当前结果适合作为基线，不应直接解释为对新病例、新设备或新批次的泛化性能。
-
-如果需要更严格的评估，应按原始大图分组划分，或将第二批完全作为独立外部测试集。
-
-## Git 提交说明
-
-`.gitignore` 会忽略虚拟环境、数据集、模型权重、训练输出、Python 缓存和外部下载数据。建议提交以下可复现文件：
-
-- `process_data.py`
-- `train.py`
-- `test.py`
-- `requirements.txt`
-- `README.md`
-- `report.md`
