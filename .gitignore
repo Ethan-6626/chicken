@@ -33,6 +33,7 @@ checkpoints/
 !dataset_combined/
 !dataset_combined/**
 !runs/
+runs/*
 !runs/combined_8_1_1_convnext_tiny/
 !runs/combined_8_1_1_convnext_tiny/**
 !runs/combined_8_1_1_convnext_tiny/test/
