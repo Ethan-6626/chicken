@@ -1,0 +1,48 @@
+# Python 缓存和本地环境
+__pycache__/
+*.py[cod]
+*.pyo
+.python-version
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# 本地数据集和外部下载数据
+dataset_combined/
+dataset_old/
+external_data/
+raw_data/
+data/
+
+# 训练输出、模型权重和实验日志
+runs/
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.safetensors
+*.log
+
+# 原始压缩包和大型二进制文件
+*.zip
+*.rar
+*.7z
+*.tar
+*.tar.gz
+*.tgz
+*.docx
+
+# 本地配置和操作系统文件
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+*.swp
+*.swo

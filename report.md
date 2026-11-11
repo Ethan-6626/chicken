@@ -1,0 +1,110 @@
+# 两批凝集裁片合并后的 ConvNeXt-Tiny 二分类实验报告
+
+**实验日期：** 2026-11-10  
+**实验目的：** 将第一批和第二批凝集裁片合并，使用师姐原实验中的 ConvNeXt-Tiny 二分类方法评估分类效果。
+
+## 1. 实验结论
+
+在当前随机图片级划分下，模型在 53 张测试图片上取得：
+
+| 指标 | 测试集结果 |
+|---|---:|
+| Accuracy | **96.23%** |
+| ROC-AUC | **1.000** |
+| F1 | **0.952** |
+| Precision | **0.909** |
+| Sensitivity | **1.000** |
+| Specificity | **0.939** |
+
+模型正确识别了全部 20 张 diseased 图片；33 张 normal 图片中有 2 张被误判为 diseased。
+
+## 2. 数据集
+
+两批数据合计 524 张裁片，使用固定随机种子 `20261110` 合并后随机打乱，按图片数量划分为 8:1:1：
+
+| 数据集 | 图片数 | normal | diseased |
+|---|---:|---:|---:|
+| Train | 419 | 218 | 201 |
+| Validation | 52 | 29 | 23 |
+| Test | 53 | 33 | 20 |
+| 合计 | 524 | 280 | 244 |
+
+批次分布没有额外约束，完全遵循“合并后随机打乱”的要求：
+
+| 数据集 | 第一批 | 第二批 |
+|---|---:|---:|
+| Train | 331 | 88 |
+| Validation | 45 | 7 |
+| Test | 42 | 11 |
+
+二分类标签映射为：
+
+- `假阳性`、`阴性` → `normal`
+- `弱阳性`、`阳性`、`强阳性` → `diseased`
+
+## 3. 划分方法
+
+数据处理代码位于 [process_data.py](process_data.py)。流程如下：
+
+1. 读取第一批五分类裁片；
+2. 读取第二批裁片（第二批原图可由同一文件中的 Excel 裁片流程生成）；
+3. 合并两批图片并使用随机种子 `20261110` 打乱；
+4. 前 80% 作为训练集，接下来 10% 作为验证集，剩余 10% 作为测试集；
+5. 按二分类标签复制到 `train/`、`val/`、`test/` 目录，并生成 `manifest.csv` 和 `split_summary.json`。
+
+本次划分是图片级随机划分，没有按原始整图或来源图片分组。
+
+## 4. 模型与训练方法
+
+- **网络：** torchvision `ConvNeXt-Tiny`
+- **初始化：** ImageNet 预训练权重
+- **分类头：** 替换为 2 类输出（`diseased`、`normal`）
+- **损失函数：** 带类别权重的交叉熵
+- **优化器：** AdamW
+- **学习率：** `3e-4`
+- **权重衰减：** `0.05`
+- **学习率调度：** Cosine Annealing
+- **训练轮数：** 30
+- **Batch size：** 8
+- **设备：** CUDA（NVIDIA GB10）
+- **训练代码：** [train.py](train.py)
+
+验证集上使用 Youden 指数选择分类阈值，最终阈值为 `0.1756265`。测试集使用同一阈值，未根据测试集结果重新调参。
+
+## 5. 验证集结果
+
+验证集最佳 ROC-AUC 为 **1.000**，对应结果为：
+
+- Accuracy：1.000
+- F1：1.000
+- Sensitivity：1.000
+- Specificity：1.000
+- 混淆矩阵：`[[29, 0], [0, 23]]`
+
+## 6. 测试集结果
+
+测试集混淆矩阵如下，行是真实标签，列是预测标签：
+
+```text
+                 Pred normal   Pred diseased
+True normal            31             2
+True diseased           0            20
+```
+
+这表示当前模型没有漏检 diseased 样本，但存在 2 个 normal → diseased 的误报。
+
+## 7. 结果解释与限制
+
+当前结果说明模型在这次随机划分上具有很强的区分能力，尤其是 diseased 的检出能力较好。不过，测试集只有 53 张图片，且采用图片级随机划分；如果同一原始图片产生的相邻裁片同时出现在训练集和测试集，测试指标可能高于真正独立样本上的表现。
+
+因此，本次结果适合作为合并数据后的基线实验结果，不能单独作为对新病例、新设备或新批次泛化能力的最终结论。后续若用于正式论文或生产评估，建议增加按原始整图分组的交叉验证，并单独报告第二批作为外部测试集时的结果。
+
+## 8. 结果文件
+
+- 数据集清单：[dataset_combined/manifest.csv](dataset_combined/manifest.csv)
+- 数据划分统计：[dataset_combined/split_summary.json](dataset_combined/split_summary.json)
+- 训练历史：[runs/combined_8_1_1_convnext_tiny/history.csv](runs/combined_8_1_1_convnext_tiny/history.csv)
+- 训练指标：[runs/combined_8_1_1_convnext_tiny/metrics.json](runs/combined_8_1_1_convnext_tiny/metrics.json)
+- 最佳模型：[runs/combined_8_1_1_convnext_tiny/best.pt](runs/combined_8_1_1_convnext_tiny/best.pt)
+- 独立测试指标：[runs/combined_8_1_1_convnext_tiny/test/test_metrics.json](runs/combined_8_1_1_convnext_tiny/test/test_metrics.json)
+- 逐图测试预测：[runs/combined_8_1_1_convnext_tiny/test/test_predictions.csv](runs/combined_8_1_1_convnext_tiny/test/test_predictions.csv)
