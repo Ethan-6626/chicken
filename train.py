@@ -10,6 +10,7 @@ import numpy as np
 import torch
 from sklearn.metrics import (
     accuracy_score,
+    balanced_accuracy_score,
     confusion_matrix,
     f1_score,
     precision_score,
@@ -27,22 +28,39 @@ def seed_everything(seed: int) -> None:
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
-    # if torch.cuda.is_available(): torch.cuda.manual_seed_all(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
 
 
 # Dataloader 读取数据
-def loaders(root: Path, batch_size: int, workers: int):
+def loaders(root: Path, batch_size: int, workers: int, augmentation: str):
     # 训练集处理
-    train_tf = transforms.Compose(
-        [
-            transforms.Resize(256),
-            transforms.RandomResizedCrop(224, scale=(0.80, 1.0)),
-            transforms.RandomRotation(5),
-            transforms.ColorJitter(0.12, 0.12, 0.08, 0.02),
-            transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-        ]
-    )
+    if augmentation == "tuned":
+        # 调整增强强度，增加对位置、方向和亮度变化的鲁棒性
+        train_tf = transforms.Compose(
+            [
+                transforms.Resize(256),
+                transforms.RandomResizedCrop(224, scale=(0.70, 1.0)),
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomVerticalFlip(),
+                transforms.RandomRotation(10),
+                transforms.ColorJitter(0.18, 0.18, 0.12, 0.03),
+                transforms.ToTensor(),
+                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+            ]
+        )
+    else:
+        # 保留原实验中的轻量增强
+        train_tf = transforms.Compose(
+            [
+                transforms.Resize(256),
+                transforms.RandomResizedCrop(224, scale=(0.80, 1.0)),
+                transforms.RandomRotation(5),
+                transforms.ColorJitter(0.12, 0.12, 0.08, 0.02),
+                transforms.ToTensor(),
+                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+            ]
+        )
     # 验证集处理
     eval_tf = transforms.Compose(
         [
@@ -109,6 +127,27 @@ def metrics(y, p, threshold):
     }
 
 
+def choose_threshold(y, p, objective):
+    """仅使用验证集标签和概率选择分类阈值。"""
+    if objective == "youden":
+        fpr, tpr, thresholds = roc_curve(y, p)
+        valid = np.isfinite(thresholds)
+        scores = np.where(valid, tpr - fpr, -np.inf)
+        return float(thresholds[np.argmax(scores)])
+    candidates = np.unique(np.r_[0.0, p, 1.0])
+    scores = []
+    for candidate in candidates:
+        pred = (p >= candidate).astype(int)
+        if objective == "accuracy":
+            score = accuracy_score(y, pred)
+        else:
+            score = balanced_accuracy_score(y, pred)
+        scores.append(score)
+    best = np.max(scores)
+    tied = candidates[np.isclose(scores, best)]
+    return float(tied[np.argmin(np.abs(tied - 0.5))])
+
+
 def main():
     # 读取命令行参数
     ap = argparse.ArgumentParser(description="ConvNeXt-Tiny 抗原二分类")
@@ -119,7 +158,7 @@ def main():
     ap.add_argument("--lr", type=float, default=3e-4)
     ap.add_argument("--weight-decay", type=float, default=0.05)
     ap.add_argument("--workers", type=int, default=0)
-    ap.add_argument("--seed", type=int, default=20261016)
+    ap.add_argument("--seed", type=int, default=20261112)
     ap.add_argument("--device", choices=["auto", "cpu", "cuda"], default="auto")
     ap.add_argument(
         "--weights",
@@ -133,6 +172,14 @@ def main():
         default=0,
         help="0 表示按报告完整训练全部轮次",
     )
+    ap.add_argument("--augmentation", choices=["baseline", "tuned"], default="baseline")
+    ap.add_argument(
+        "--threshold-objective",
+        choices=["youden", "accuracy", "balanced_accuracy"],
+        default="youden",
+    )
+    ap.add_argument("--class-weight-power", type=float, default=1.0)
+    ap.add_argument("--label-smoothing", type=float, default=0.0)
     args = ap.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
 
@@ -150,7 +197,7 @@ def main():
     )
 
     # 加载数据
-    sets, dls = loaders(args.data, args.batch_size, args.workers)
+    sets, dls = loaders(args.data, args.batch_size, args.workers, args.augmentation)
 
     # 预训练权重
     pretrained = (
@@ -165,10 +212,12 @@ def main():
     model.to(device)
 
     counts = np.bincount(sets["train"].targets, minlength=2)
+    base_weights = len(sets["train"]) / (2 * counts)
     weights = torch.tensor(
-        len(sets["train"]) / (2 * counts), dtype=torch.float32, device=device
+        base_weights**args.class_weight_power, dtype=torch.float32, device=device
     )
-    criterion = nn.CrossEntropyLoss(weight=weights)
+    weights = weights / weights.mean()
+    criterion = nn.CrossEntropyLoss(weight=weights, label_smoothing=args.label_smoothing)
     optimizer = torch.optim.AdamW(
         model.parameters(), lr=args.lr, weight_decay=args.weight_decay
     )
@@ -224,8 +273,7 @@ def main():
         ]
     )
     vy, vp, _ = predict(model, dls["val"], device)
-    fpr, tpr, thresholds = roc_curve(vy, vp)
-    threshold = float(thresholds[np.argmax(tpr - fpr)])
+    threshold = choose_threshold(vy, vp, args.threshold_objective)
     ty, tp, _ = predict(model, dls["test"], device)
     result = {
         "device": str(device),

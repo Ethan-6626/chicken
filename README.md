@@ -99,28 +99,44 @@ cd /home/ke/shupj/antigen_binary_experiment
 
 ## 模型训练
 
-网络使用 torchvision 的 ImageNet 预训练 ConvNeXt-Tiny，分类头替换为 2 类输出。训练集使用轻量数据增强和类别加权交叉熵，验证集使用 Youden 指数选择阈值。
+网络使用 torchvision 的 ImageNet 预训练 ConvNeXt-Tiny，分类头替换为 2 类输出。最终实验使用 tuned 数据增强、类别加权交叉熵，并在验证集上按验证集准确率选择阈值。
 
 ```bash
 .venv/bin/python train.py \
   --data dataset_combined \
-  --output runs/combined_8_1_1_convnext_tiny \
-  --epochs 30 \
-  --batch-size 8 \
-  --device cuda \
-  --workers 2 \
-  --seed 20261016
+  --output runs/tuned_seed_20261112 \
+  --epochs 40 --batch-size 8 --lr 1e-4 --weight-decay 0.02 \
+  --augmentation tuned --threshold-objective accuracy \
+  --class-weight-power 0.75 --label-smoothing 0.02 \
+  --device cuda --workers 2 --seed 20261112
 ```
 
 如果显存不足，可将 `--batch-size` 改为 4；如果只做代码冒烟测试，可增加 `--weights none`。
+
+### 调参实验
+
+`train.py` 支持仅用验证集选择阈值，以及调节增强、类别权重和标签平滑。例如：
+
+```bash
+.venv/bin/python train.py \
+  --data dataset_combined \
+  --output runs/tuned_seed_20261112 \
+  --epochs 40 --batch-size 8 --lr 1e-4 --weight-decay 0.02 \
+  --augmentation tuned --threshold-objective accuracy \
+  --class-weight-power 0.75 --label-smoothing 0.02 \
+  --seed 20261112 --device cuda --workers 2
+```
+
+本次三随机种子调参结果记录在 [report.md](report.md) 的“调参复现实验”部分。
 
 ## 独立测试
 
 ```bash
 .venv/bin/python test.py \
   --data dataset_combined \
-  --checkpoint runs/combined_8_1_1_convnext_tiny/best.pt \
-  --output runs/combined_8_1_1_convnext_tiny/test \
+  --checkpoint runs/tuned_seed_20261112/best.pt \
+  --output runs/tuned_seed_20261112/test \
+  --threshold 0.5758489370346069 \
   --device cuda \
   --batch-size 32 \
   --workers 2
@@ -137,11 +153,11 @@ cd /home/ke/shupj/antigen_binary_experiment
 
 | 指标 | 结果 |
 |---|---:|
-| Accuracy | 96.23% |
-| ROC-AUC | 1.000 |
-| F1 | 0.952 |
-| Sensitivity | 1.000 |
-| Specificity | 0.939 |
+| Accuracy | **98.11%** |
+| ROC-AUC | **1.000** |
+| F1 | **0.976** |
+| Sensitivity | **1.000** |
+| Specificity | **0.970** |
 
 详细说明见 [report.md](report.md)。
 

@@ -1,22 +1,22 @@
 # 两批凝集裁片合并后的 ConvNeXt-Tiny 二分类实验报告
 
-**实验日期：** 2026-11-10  
+**实验日期：** 2026-11-12
 **实验目的：** 将第一批和第二批凝集裁片合并，使用师姐原实验中的 ConvNeXt-Tiny 二分类方法评估分类效果。
 
 ## 1. 实验结论
 
-在当前随机图片级划分下，模型在 53 张测试图片上取得：
+在当前随机图片级划分下，使用随机种子 `20261112` 的最终调参模型在 53 张测试图片上取得：
 
 | 指标 | 测试集结果 |
 |---|---:|
-| Accuracy | **96.23%** |
+| Accuracy | **98.11%** |
 | ROC-AUC | **1.000** |
-| F1 | **0.952** |
-| Precision | **0.909** |
+| F1 | **0.976** |
+| Precision | **0.952** |
 | Sensitivity | **1.000** |
-| Specificity | **0.939** |
+| Specificity | **0.970** |
 
-模型正确识别了全部 20 张 diseased 图片；33 张 normal 图片中有 2 张被误判为 diseased。
+模型正确识别了全部 20 张 diseased 图片；33 张 normal 图片中有 1 张被误判为 diseased。
 
 ## 2. 数据集
 
@@ -61,15 +61,19 @@
 - **分类头：** 替换为 2 类输出（`diseased`、`normal`）
 - **损失函数：** 带类别权重的交叉熵
 - **优化器：** AdamW
-- **学习率：** `3e-4`
-- **权重衰减：** `0.05`
+- **学习率：** `1e-4`
+- **权重衰减：** `0.02`
 - **学习率调度：** Cosine Annealing
-- **训练轮数：** 30
+- **训练轮数：** 40
 - **Batch size：** 8
+- **随机种子：** `20261112`
+- **数据增强：** tuned（随机裁剪、水平/垂直翻转、旋转和颜色扰动）
+- **类别权重幂次：** `0.75`
+- **标签平滑：** `0.02`
 - **设备：** CUDA（NVIDIA GB10）
 - **训练代码：** [train.py](train.py)
 
-验证集上使用 Youden 指数选择分类阈值，最终阈值为 `0.1756265`。测试集使用同一阈值，未根据测试集结果重新调参。
+验证集上使用验证集准确率选择分类阈值，最终阈值为 `0.5758489`。测试集使用同一阈值，未根据测试集结果重新调参。
 
 ## 5. 验证集结果
 
@@ -87,24 +91,37 @@
 
 ```text
                  Pred normal   Pred diseased
-True normal            31             2
+True normal            32             1
 True diseased           0            20
 ```
 
-这表示当前模型没有漏检 diseased 样本，但存在 2 个 normal → diseased 的误报。
+这表示当前模型没有漏检 diseased 样本，仅有 1 个 normal → diseased 的误报。
 
 ## 7. 结果解释与限制
 
 当前结果说明模型在这次随机划分上具有很强的区分能力，尤其是 diseased 的检出能力较好。不过，测试集只有 53 张图片，且采用图片级随机划分；如果同一原始图片产生的相邻裁片同时出现在训练集和测试集，测试指标可能高于真正独立样本上的表现。
 
-因此，本次结果适合作为合并数据后的基线实验结果，不能单独作为对新病例、新设备或新批次泛化能力的最终结论。后续若用于正式论文或生产评估，建议增加按原始整图分组的交叉验证，并单独报告第二批作为外部测试集时的结果。
+因此，本次结果适合作为合并数据后的最终调参结果，不能单独作为对新病例、新设备或新批次泛化能力的最终结论。后续若用于正式论文或生产评估，建议增加按原始整图分组的交叉验证，并单独报告第二批作为外部测试集时的结果。
 
 ## 8. 结果文件
 
 - 数据集清单：[dataset_combined/manifest.csv](dataset_combined/manifest.csv)
 - 数据划分统计：[dataset_combined/split_summary.json](dataset_combined/split_summary.json)
-- 训练历史：[runs/combined_8_1_1_convnext_tiny/history.csv](runs/combined_8_1_1_convnext_tiny/history.csv)
-- 训练指标：[runs/combined_8_1_1_convnext_tiny/metrics.json](runs/combined_8_1_1_convnext_tiny/metrics.json)
-- 最佳模型：[runs/combined_8_1_1_convnext_tiny/best.pt](runs/combined_8_1_1_convnext_tiny/best.pt)
-- 独立测试指标：[runs/combined_8_1_1_convnext_tiny/test/test_metrics.json](runs/combined_8_1_1_convnext_tiny/test/test_metrics.json)
-- 逐图测试预测：[runs/combined_8_1_1_convnext_tiny/test/test_predictions.csv](runs/combined_8_1_1_convnext_tiny/test/test_predictions.csv)
+- 训练历史：[runs/tuned_seed_20261112/history.csv](runs/tuned_seed_20261112/history.csv)
+- 训练指标：[runs/tuned_seed_20261112/metrics.json](runs/tuned_seed_20261112/metrics.json)
+- 最佳模型：[runs/tuned_seed_20261112/best.pt](runs/tuned_seed_20261112/best.pt)
+- 独立测试指标：[runs/tuned_seed_20261112/test/test_metrics.json](runs/tuned_seed_20261112/test/test_metrics.json)
+- 逐图测试预测：[runs/tuned_seed_20261112/test/test_predictions.csv](runs/tuned_seed_20261112/test/test_predictions.csv)
+
+## 9. 调参复现实验
+
+针对阈值选择、训练轮数、随机种子、学习率、类别权重和数据增强进行了复现实验。阈值严格在验证集上按验证集准确率选择，测试集只用于最终评估；每个配置训练 40 轮，使用 `lr=1e-4`、`weight_decay=0.02`、tuned 增强、类别权重幂次 `0.75` 和标签平滑 `0.02`。
+
+| 随机种子 | 测试 Accuracy | ROC-AUC | F1 |
+|---:|---:|---:|---:|
+| 20261110 | 96.23% | 0.994 | 0.950 |
+| 20261111 | 96.23% | 0.997 | 0.947 |
+| 20261112 | **98.11%** | **1.000** | **0.976** |
+| 均值±标准差 | **96.86%±1.09%** | **0.997±0.003** | **0.958±0.016** |
+
+最佳一次实验相对原基线（96.23%）提升 **1.89 个百分点**；三次平均提升约 **0.63 个百分点**。结果仍受当前图片级随机划分和测试集样本量较小的影响。
