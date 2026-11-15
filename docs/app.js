@@ -1,5 +1,7 @@
 const state = { file: null, previewUrl: null };
 const threshold = 0.575848937;
+// GitHub Pages 通过这个地址调用服务器上的真实模型；部署到其他环境时可覆盖 window.API_BASE_URL。
+const API_BASE_URL = window.API_BASE_URL || 'https://gx10-aeef.tail1f6601.ts.net';
 const $ = (id) => document.getElementById(id);
 
 function showSection(section) {
@@ -62,7 +64,7 @@ function demoProbability(file) {
 
 async function requestPrediction(file) {
   try {
-    const response = await fetch('/api/predict', { method: 'POST', body: (() => { const form = new FormData(); form.append('file', file); return form; })() });
+    const response = await fetch(`${API_BASE_URL}/api/predict`, { method: 'POST', body: (() => { const form = new FormData(); form.append('file', file); return form; })() });
     if (!response.ok) throw new Error('API unavailable');
     const data = await response.json();
     return { probability: Number(data.diseased_probability ?? data.probability), mode: '后端模型' };

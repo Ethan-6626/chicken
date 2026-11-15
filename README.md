@@ -172,4 +172,14 @@ python3 -m http.server 8080 --directory web
 
 浏览器打开 <http://localhost:8080> 即可。前端会尝试调用 `POST /api/predict`；未连接后端时使用明确标注的演示推理结果。
 
+## 后端模型接口
+
+使用最终模型启动真实预测接口：
+
+```bash
+.venv/bin/uvicorn backend:app --host 127.0.0.1 --port 8787
+```
+
+健康检查：`GET /api/health`；图片预测：`POST /api/predict`，上传字段名为 `file`。接口加载 `runs/tuned_seed_20261112/best.pt`，使用验证集确定的阈值 `0.575848937`。
+
 
