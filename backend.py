@@ -21,6 +21,7 @@ from torch import nn
 ROOT = Path(__file__).resolve().parent
 CHECKPOINT = Path(os.getenv("ANTIGEN_CHECKPOINT", ROOT / "runs/tuned_seed_20261112/best.pt"))
 THRESHOLD = 0.5758489370346069
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 app = FastAPI(title="Antigen AI Inference API", version="20261112")
@@ -73,6 +74,8 @@ async def predict(file: UploadFile = File(...)):
         raise HTTPException(status_code=415, detail="请上传 JPG、PNG 或 WebP 图片")
     try:
         raw = await file.read()
+        if len(raw) > MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=413, detail="图片不能超过10 MB")
         image = Image.open(io.BytesIO(raw)).convert("RGB")
     except (UnidentifiedImageError, OSError) as exc:
         raise HTTPException(status_code=400, detail="无法读取图片文件") from exc
