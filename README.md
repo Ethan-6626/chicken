@@ -170,16 +170,74 @@ cd /home/ke/shupj/antigen_binary_experiment
 python3 -m http.server 8080 --directory web
 ```
 
-浏览器打开 <http://localhost:8080> 即可。前端会尝试调用 `POST /api/predict`；未连接后端时使用明确标注的演示推理结果。
+浏览器打开 <http://localhost:8080> 即可。前端会调用配置的真实后端接口；如果接口不可用，才会明确标注为演示推理。
 
 ## 后端模型接口
 
 使用最终模型启动真实预测接口：
 
 ```bash
-.venv/bin/uvicorn backend:app --host 127.0.0.1 --port 8787
+.venv/bin/python -m uvicorn backend:app --host 127.0.0.1 --port 8787
 ```
 
 健康检查：`GET /api/health`；图片预测：`POST /api/predict`，上传字段名为 `file`。接口加载 `runs/tuned_seed_20261112/best.pt`，使用验证集确定的阈值 `0.575848937`。
+
+## 从数据处理到 WebUI 部署
+
+### 1. 处理两批数据
+
+确认原始数据目录位于项目同级的 `../raw_data/` 后，执行：
+
+```bash
+.venv/bin/python process_data.py \
+  --mode all \
+  --second-source "../raw_data/凝集图片20260827" \
+  --labels "../raw_data/凝集图片20260827/结果统计.xlsx" \
+  --second-output "../raw_data/凝集图片20260827_裁片" \
+  --first-source "../raw_data/抗原图片" \
+  --output dataset_combined \
+  --seed 20261110 \
+  --overwrite
+```
+
+### 2. 训练最终模型
+
+```bash
+.venv/bin/python train.py \
+  --data dataset_combined \
+  --output runs/tuned_seed_20261112 \
+  --epochs 40 --batch-size 8 --lr 1e-4 --weight-decay 0.02 \
+  --augmentation tuned --threshold-objective accuracy \
+  --class-weight-power 0.75 --label-smoothing 0.02 \
+  --seed 20261112 --device cuda --workers 2
+```
+
+### 3. 启动真实后端和 WebUI
+
+后端会加载 `runs/tuned_seed_20261112/best.pt`。先启动接口：
+
+```bash
+.venv/bin/python -m uvicorn backend:app --host 127.0.0.1 --port 8787
+```
+
+后端根路径同时提供 WebUI，接口检查：
+
+```bash
+curl http://127.0.0.1:8787/api/health
+```
+
+如果只在服务器本机使用，可访问 `http://127.0.0.1:8787`。如果通过 Tailscale Serve/Funnel 转发，访问对应的 HTTPS 域名；前端会自动检查 `/api/health`，只有真实接口不可用时才显示演示状态。
+
+### 4. 部署 GitHub Pages 前端
+
+仓库地址：<https://github.com/Ethan-6626/chicken>
+
+仓库中的 `docs/` 已准备好静态页面。在 GitHub 仓库的 `Settings → Pages` 中选择 `main` 分支和 `/docs` 目录，然后访问：
+
+```text
+https://ethan-6626.github.io/chicken/
+```
+
+GitHub Pages 只能托管前端，真实模型仍需保持后端服务在线，并确保前端能访问后端 HTTPS 地址。
 
 

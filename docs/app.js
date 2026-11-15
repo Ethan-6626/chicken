@@ -2,6 +2,7 @@ const state = { file: null, previewUrl: null };
 const threshold = 0.575848937;
 // GitHub Pages 通过这个地址调用服务器上的真实模型；部署到其他环境时可覆盖 window.API_BASE_URL。
 const API_BASE_URL = window.API_BASE_URL || 'https://gx10-aeef.tail1f6601.ts.net';
+let backendOnline = false;
 const $ = (id) => document.getElementById(id);
 
 function showSection(section) {
@@ -10,6 +11,24 @@ function showSection(section) {
   const title = section === 'overview' ? '分析总览' : section === 'predict' ? '图片预测' : '实验记录';
   document.querySelector('.breadcrumb strong').textContent = title;
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function checkBackend() {
+  const status = $('backendStatus');
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/health`, { cache: 'no-store' });
+    if (!response.ok) throw new Error('health check failed');
+    const data = await response.json();
+    backendOnline = data.status === 'ok';
+    status.textContent = backendOnline ? '后端模型在线' : '后端连接异常';
+    status.classList.toggle('green', backendOnline);
+    status.classList.toggle('yellow', !backendOnline);
+  } catch (_) {
+    backendOnline = false;
+    status.textContent = '后端暂不可用';
+    status.classList.remove('green');
+    status.classList.add('yellow');
+  }
 }
 
 document.querySelectorAll('.nav-item').forEach((item) => item.addEventListener('click', () => showSection(item.dataset.section)));
@@ -99,5 +118,6 @@ async function analyze() {
 }
 
 $('analyzeBtn').addEventListener('click', analyze);
+checkBackend();
 let toastTimer;
 function showToast(message) { const toast = $('toast'); toast.textContent = message; toast.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 3600); }
