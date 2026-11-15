@@ -15,6 +15,7 @@ antigen_binary_experiment/
 ├── train.py                 # ConvNeXt-Tiny 训练
 ├── test.py                  # 独立测试和指标计算
 ├── report.md                # 本次实验报告
+├── web/                     # 前端演示界面
 ├── requirements.txt         # Python 依赖
 ├── dataset_combined/        # 本地生成的数据集（已加入 .gitignore）
 └── runs/                    # 本地模型、日志和预测结果（已加入 .gitignore）
@@ -160,5 +161,15 @@ cd /home/ke/shupj/antigen_binary_experiment
 | Specificity | **0.970** |
 
 详细说明见 [report.md](report.md)。
+
+## 前端演示界面
+
+项目包含一个无需构建工具的静态 Web 界面，提供分析总览、图片上传预测和实验记录页面：
+
+```bash
+python3 -m http.server 8080 --directory web
+```
+
+浏览器打开 <http://localhost:8080> 即可。前端会尝试调用 `POST /api/predict`；未连接后端时使用明确标注的演示推理结果。
 
 
