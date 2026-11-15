@@ -13,6 +13,7 @@ from pathlib import Path
 import torch
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from PIL import Image, UnidentifiedImageError
 from torchvision import models, transforms
 from torch import nn
@@ -93,3 +94,7 @@ async def predict(file: UploadFile = File(...)):
         "seed": 20261112,
         "device": str(DEVICE),
     }
+
+
+# 让 Funnel 地址根路径直接打开前端，不再显示 FastAPI 的 404 JSON。
+app.mount("/", StaticFiles(directory=ROOT / "web", html=True), name="web")
