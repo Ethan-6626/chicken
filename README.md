@@ -164,7 +164,7 @@ cd /home/ke/shupj/antigen_binary_experiment
 
 ## 前端演示界面
 
-项目包含一个无需构建工具的静态 Web 界面，提供分析总览、图片上传预测和实验记录页面：
+项目包含一个无需构建工具的图片预测 Web 界面，提供图片上传、后端状态检查、患病概率和分类结果展示：
 
 ```bash
 python3 -m http.server 8080 --directory web
