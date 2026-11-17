@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>抗原凝集智能预测</title>
-    <meta name="description" content="基于 ConvNeXt-Tiny 的抗原凝集图片预测工具" />
+    <title>抗原凝集智能分析平台</title>
+    <meta name="description" content="基于 ConvNeXt-Tiny 的抗原凝集图片二分类演示平台" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -15,66 +15,65 @@
       <aside class="sidebar">
         <div class="brand">
           <div class="brand-mark"><span></span><span></span><span></span></div>
-          <div><strong>ANTIGEN<span>AI</span></strong><small>凝集图像智能预测</small></div>
+          <div>
+            <strong>ANTIGEN<span>AI</span></strong>
+            <small>凝集图像分析平台</small>
+          </div>
         </div>
         <nav class="nav-list" aria-label="主导航">
-          <button class="nav-item active" data-section="predict"><i>＋</i>图片预测</button>
+          <button class="nav-item active" data-section="overview"><i>◈</i>分析总览</button>
+          <button class="nav-item" data-section="predict"><i>＋</i>图片预测</button>
+          <button class="nav-item" data-section="experiments"><i>▦</i>实验记录</button>
         </nav>
         <div class="sidebar-foot">
-          <div class="status-dot"><b></b>模型服务运行中</div>
-          <div class="model-mini"><span>当前模型</span><strong>ConvNeXt-Tiny</strong><small>患病 / 正常二分类</small></div>
+          <div class="status-dot"><b></b>模型服务在线</div>
+          <div class="model-mini"><span>当前模型</span><strong>ConvNeXt-Tiny</strong><small>最终合并数据版本</small></div>
           <a class="github-link" style="display:block;background:#61c5ad;color:#12383d;text-align:center;font-size:11px;font-weight:800;text-decoration:none;border-radius:8px;padding:11px 10px;margin:16px 0 0;box-shadow:0 7px 15px rgba(0,0,0,.15)" href="https://github.com/Ethan-6626/chicken" target="_blank" rel="noreferrer">查看 GitHub 项目 ↗</a>
         </div>
       </aside>
 
       <main class="main-content">
         <header class="topbar">
-          <div class="breadcrumb"><span>抗原凝集智能预测</span><b>/</b><strong>图片预测</strong></div>
-          <div class="top-actions"><span class="sync-label">ConvNeXt-Tiny</span><button class="avatar">AI</button></div>
+          <div class="breadcrumb"><span>工作台</span><b>/</b><strong>分析总览</strong></div>
+          <div class="top-actions"><span class="sync-label">最后同步 2026.11.12</span><button class="avatar">KE</button></div>
         </header>
 
-        <section class="view-section active" id="predict">
-          <div class="page-heading compact">
-            <div><p class="eyebrow">IMAGE INFERENCE</p><h1>抗原凝集图片预测</h1><p class="subheading">上传一张凝集裁片，模型将判断图片属于患病状态还是正常状态。</p></div>
-            <span class="pill yellow" id="backendStatus">检查后端中…</span>
+        <section class="view-section active" id="overview">
+          <div class="page-heading">
+            <div><p class="eyebrow">MODEL MONITORING / 01</p><h1>抗原凝集分析工作台</h1><p class="subheading">快速判断凝集裁片属于正常状态还是患病状态。</p></div>
+            <button class="primary-btn jump-predict">开始一次预测 <span>↗</span></button>
           </div>
 
-          <div class="predict-layout">
-            <article class="panel upload-panel">
-              <div class="panel-heading"><div><h3>上传待检测图片</h3><p>支持 JPG、PNG、WebP，建议使用清晰的凝集裁片</p></div><span class="upload-count" id="fileName">未选择文件</span></div>
-              <label class="dropzone" id="dropzone" for="fileInput">
-                <input id="fileInput" type="file" accept="image/png,image/jpeg,image/webp" />
-                <div class="drop-icon">↑</div><h3>拖拽图片到这里</h3><p>或点击选择本地文件</p><span class="drop-hint">图片用于本次模型预测，不在服务器中保存</span>
-              </label>
-              <div class="preview-wrap hidden" id="previewWrap">
-                <img id="previewImage" alt="待分析图片预览" />
-                <div><span class="eyebrow">READY TO ANALYZE</span><h3 id="previewName">sample.jpg</h3><p id="previewMeta">—</p></div>
-                <button class="icon-btn" id="removeFile" aria-label="移除图片">×</button>
-              </div>
-              <button class="primary-btn analyze-btn" id="analyzeBtn" disabled>开始预测 <span>→</span></button>
-              <div class="demo-note"><span>i</span><p>系统将调用真实的 ConvNeXt-Tiny 后端模型完成预测。</p></div>
+          <div class="hero-grid">
+            <article class="hero-card">
+              <div class="hero-copy"><p class="eyebrow light">LATEST RUN · 20261112</p><h2>两批数据合并后，识别效果持续提升。</h2><p>加入第二批 106 张凝集裁片后，最终测试准确率达到 <b>98.11%</b>，相比第一批实验提升 1.62 个百分点。</p><button class="text-btn jump-predict">上传图片开始分析 <span>→</span></button></div>
+              <div class="hero-orbit"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="orbit-core">98<small>.11%</small></div><span class="orbit-label">TEST ACCURACY</span></div>
             </article>
+            <div class="metric-stack">
+              <div class="metric-card accent"><span>测试准确率</span><strong>98.11%</strong><small>↑ 1.62pp <em>vs. 第一批</em></small></div>
+              <div class="metric-card"><span>ROC-AUC</span><strong>1.000</strong><small>排序能力优秀</small></div>
+              <div class="metric-card"><span>患病灵敏度</span><strong>100%</strong><small>20 / 20 全部检出</small></div>
+            </div>
+          </div>
 
-            <article class="panel result-panel" id="resultPanel">
-              <div class="panel-heading"><div><h3>预测结果</h3><p id="resultSub">等待上传图片</p></div><span class="panel-tag" id="resultTag">IDLE</span></div>
-              <div class="result-empty" id="resultEmpty"><div class="empty-ring">◎</div><p>上传图片后，这里会显示模型预测结果</p></div>
-              <div class="result-content hidden" id="resultContent">
-                <div class="result-badge" id="resultBadge"><span class="result-icon" id="resultIcon">✓</span><div><small>MODEL PREDICTION</small><strong id="resultLabel">正常状态</strong></div></div>
-                <div class="probability">
-                  <div><span>患病概率</span><strong id="probabilityValue">0.00%</strong></div>
-                  <div class="prob-track"><i id="probabilityBar"></i><b id="thresholdMark"></b></div>
-                  <div class="prob-foot"><span>0</span><small>决策阈值 0.5758</small><span>1</span></div>
-                </div>
-                <div class="result-details"><div><span>模型</span><b>ConvNeXt-Tiny</b></div><div><span>推理状态</span><b id="inferenceMode">等待连接</b></div></div>
-              </div>
-            </article>
+          <div class="section-title"><div><p class="eyebrow">EVALUATION SNAPSHOT</p><h2>实验结果概览</h2></div><span class="pill green">验证集阈值 · 0.5758</span></div>
+          <div class="analytics-grid">
+            <article class="panel chart-panel"><div class="panel-heading"><div><h3>模型表现</h3><p>最终测试集指标</p></div><span class="panel-tag">FINAL</span></div><div class="bar-list"><div class="bar-row"><span>Accuracy</span><div class="bar-track"><i style="width:98.11%"></i></div><b>98.11%</b></div><div class="bar-row"><span>ROC-AUC</span><div class="bar-track"><i style="width:100%"></i></div><b>1.000</b></div><div class="bar-row"><span>F1 score</span><div class="bar-track"><i style="width:97.56%"></i></div><b>97.56%</b></div><div class="bar-row"><span>Specificity</span><div class="bar-track"><i style="width:96.97%"></i></div><b>96.97%</b></div></div></article>
+            <article class="panel matrix-panel"><div class="panel-heading"><div><h3>混淆矩阵</h3><p>53 张测试图片</p></div><span class="panel-tag orange">MATRIX</span></div><div class="matrix"><div></div><span>预测正常</span><span>预测患病</span><b>真实正常</b><strong class="cell good">32</strong><strong class="cell warn">1</strong><b>真实患病</b><strong class="cell safe">0</strong><strong class="cell good">20</strong></div><div class="matrix-legend"><span><i class="legend-good"></i>正确分类</span><span><i class="legend-warn"></i>误报</span></div></article>
           </div>
         </section>
 
-        <footer class="footer">
-          <span>ANTIGEN<span>AI</span> · Antigen Agglutination Prediction</span>
-          <a href="https://github.com/Ethan-6626/chicken" target="_blank" rel="noreferrer" style="color:#187f78;text-decoration:none;font-weight:700">GitHub 项目 ↗</a>
-        </footer>
+        <section class="view-section" id="predict">
+          <div class="page-heading compact"><div><p class="eyebrow">IMAGE INFERENCE / 02</p><h1>图片预测</h1><p class="subheading">上传一张凝集裁片，查看模型的判断和置信度。</p></div><span class="pill yellow" id="backendStatus">检查后端中…</span></div>
+          <div class="predict-layout">
+            <article class="panel upload-panel"><div class="panel-heading"><div><h3>上传待检测图片</h3><p>支持 JPG、PNG，建议使用 224×224 裁片</p></div><span class="upload-count" id="fileName">未选择文件</span></div><label class="dropzone" id="dropzone" for="fileInput"><input id="fileInput" type="file" accept="image/png,image/jpeg,image/webp" /><div class="drop-icon">↑</div><h3>拖拽图片到这里</h3><p>或点击选择本地文件</p><span class="drop-hint">图片仅在当前浏览器内预览</span></label><div class="preview-wrap hidden" id="previewWrap"><img id="previewImage" alt="待分析图片预览" /><div><span class="eyebrow">READY TO ANALYZE</span><h3 id="previewName">sample.jpg</h3><p id="previewMeta">—</p></div><button class="icon-btn" id="removeFile" aria-label="移除图片">×</button></div><button class="primary-btn analyze-btn" id="analyzeBtn" disabled>开始分析 <span>→</span></button><div class="demo-note"><span>i</span><p>当前界面已预留 <code>POST /api/predict</code> 接口。未连接后端时将使用演示结果。</p></div></article>
+            <article class="panel result-panel" id="resultPanel"><div class="panel-heading"><div><h3>预测结果</h3><p id="resultSub">等待上传图片</p></div><span class="panel-tag" id="resultTag">IDLE</span></div><div class="result-empty" id="resultEmpty"><div class="empty-ring">◎</div><p>上传图片后，这里会显示模型输出</p></div><div class="result-content hidden" id="resultContent"><div class="result-badge" id="resultBadge"><span class="result-icon" id="resultIcon">✓</span><div><small>MODEL PREDICTION</small><strong id="resultLabel">正常状态</strong></div></div><div class="probability"><div><span>患病概率</span><strong id="probabilityValue">0.00%</strong></div><div class="prob-track"><i id="probabilityBar"></i><b id="thresholdMark"></b></div><div class="prob-foot"><span>0</span><small>决策阈值 0.5758</small><span>1</span></div></div><div class="result-details"><div><span>模型</span><b>ConvNeXt-Tiny</b></div><div><span>推理模式</span><b id="inferenceMode">等待连接</b></div></div></div></article>
+          </div>
+        </section>
+
+        <section class="view-section" id="experiments"><div class="page-heading compact"><div><p class="eyebrow">EXPERIMENT LOG / 03</p><h1>实验记录</h1><p class="subheading">记录第一批基线与两批数据合并后的最终结果。</p></div></div><article class="panel experiment-panel"><div class="table-wrap"><table><thead><tr><th>实验版本</th><th>数据规模</th><th>训练策略</th><th>测试准确率</th><th>ROC-AUC</th><th>状态</th></tr></thead><tbody><tr><td><strong>combined · final</strong><small>两批数据合并后的最终版本</small></td><td>524 张</td><td>40 epochs · tuned aug</td><td class="table-emphasis">98.11%</td><td>1.000</td><td><span class="status-chip">最佳</span></td></tr><tr><td><strong>first batch baseline</strong><small>师姐原始实验</small></td><td>418 张</td><td>30 epochs · baseline aug</td><td>96.49%</td><td>1.000</td><td><span class="status-chip muted">基线</span></td></tr></tbody></table></div></article></section>
+
+        <footer class="footer"><span>ANTIGEN<span>AI</span> · Antigen Agglutination Intelligence</span><span>ConvNeXt-Tiny / v20261112</span></footer>
       </main>
     </div>
     <div class="toast" id="toast" role="status"></div>
