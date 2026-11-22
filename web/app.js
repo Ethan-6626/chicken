@@ -97,7 +97,6 @@ async function analyze() {
   $('resultTag').textContent = 'RUNNING';
   $('resultSub').textContent = '正在计算患病概率';
   const file = state.file;
-  const started = performance.now();
   $('removeFile').disabled = true;
   let result;
   try {
@@ -114,7 +113,6 @@ async function analyze() {
     button.textContent = '重新分析';
   }
   if (file !== state.file) return;
-  $('predictionTime').textContent = `${Math.round(performance.now() - started)} ms`;
   const probability = Math.max(0, Math.min(1, result.probability));
   const diseased = probability >= result.threshold;
   $('resultEmpty').classList.add('hidden');
