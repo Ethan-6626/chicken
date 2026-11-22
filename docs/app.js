@@ -9,7 +9,7 @@ function showSection(section) {
   document.querySelectorAll('.nav-item').forEach((item) => item.classList.toggle('active', item.dataset.section === section));
   document.querySelectorAll('.view-section').forEach((view) => view.classList.toggle('active', view.id === section));
   const title = section === 'overview' ? '分析总览' : section === 'predict' ? '图片预测' : '实验记录';
-  document.querySelector('.breadcrumb strong').textContent = title;
+  document.querySelector('.current-page').textContent = title;
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -52,7 +52,7 @@ function setFile(file) {
   $('resultEmpty').classList.remove('hidden');
   $('resultContent').classList.add('hidden');
   $('resultSub').textContent = '图片已就绪，可以开始分析';
-  $('resultTag').textContent = 'READY';
+  $('resultTag').textContent = '已选择';
 }
 
 $('fileInput').addEventListener('change', (event) => setFile(event.target.files[0]));
@@ -69,7 +69,7 @@ $('removeFile').addEventListener('click', () => {
   $('resultContent').classList.add('hidden');
   $('fileName').textContent = '未选择文件';
   $('resultSub').textContent = '等待上传图片';
-  $('resultTag').textContent = 'IDLE';
+  $('resultTag').textContent = '等待';
 });
 
 function demoProbability(file) {
@@ -86,9 +86,9 @@ async function requestPrediction(file) {
     const response = await fetch(`${API_BASE_URL}/api/predict`, { method: 'POST', body: (() => { const form = new FormData(); form.append('file', file); return form; })() });
     if (!response.ok) throw new Error('API unavailable');
     const data = await response.json();
-    return { probability: Number(data.diseased_probability ?? data.probability), mode: '后端模型' };
+    return { probability: Number(data.diseased_probability ?? data.probability), mode: '服务器模型' };
   } catch (_) {
-    return { probability: demoProbability(file), mode: '演示推理' };
+    return { probability: demoProbability(file), mode: '本地演示' };
   }
 }
 
@@ -96,16 +96,16 @@ async function analyze() {
   if (!state.file) return;
   const button = $('analyzeBtn');
   button.disabled = true;
-  button.innerHTML = '分析中… <span>↻</span>';
-  $('resultTag').textContent = 'RUNNING';
+  button.textContent = '预测中…';
+  $('resultTag').textContent = '处理中';
   $('resultSub').textContent = '正在计算患病概率';
   const result = await requestPrediction(state.file);
   const probability = Math.max(0, Math.min(1, result.probability));
   const diseased = probability >= threshold;
   $('resultEmpty').classList.add('hidden');
   $('resultContent').classList.remove('hidden');
-  $('resultTag').textContent = 'DONE';
-  $('resultSub').textContent = '已完成一次图片推理';
+  $('resultTag').textContent = '完成';
+  $('resultSub').textContent = '预测完成';
   $('resultBadge').classList.toggle('diseased', diseased);
   $('resultIcon').textContent = diseased ? '!' : '✓';
   $('resultLabel').textContent = diseased ? '患病状态' : '正常状态';
@@ -113,8 +113,8 @@ async function analyze() {
   $('probabilityBar').style.width = `${probability * 100}%`;
   $('inferenceMode').textContent = result.mode;
   button.disabled = false;
-  button.innerHTML = '重新分析 <span>↻</span>';
-  showToast(result.mode === '演示推理' ? '已显示演示预测结果，可接入后端模型替换' : '后端模型分析完成');
+  button.textContent = '重新预测';
+  showToast(result.mode === '本地演示' ? '服务器不可用，当前显示演示结果' : '预测完成');
 }
 
 $('analyzeBtn').addEventListener('click', analyze);
