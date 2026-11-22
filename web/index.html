@@ -34,7 +34,6 @@
       <main class="main-content">
         <header class="topbar">
           <div class="breadcrumb"><span>工作台</span><b>/</b><strong>分析总览</strong></div>
-          <div class="top-actions"><button class="avatar">KE</button></div>
         </header>
 
         <section class="view-section active" id="overview">
@@ -45,8 +44,17 @@
 
           <div class="hero-grid">
             <article class="hero-card">
-              <div class="hero-copy"><h2>两批数据合并后，识别效果持续提升。</h2><p>加入第二批 106 张凝集裁片后，最终测试准确率达到 <b>98.11%</b>，相比第一批实验提升 1.62 个百分点。</p><button class="text-btn jump-predict">上传图片开始分析 <span>→</span></button></div>
-              <div class="hero-orbit"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="orbit-core">98<small>.11%</small></div></div>
+              <div class="hero-copy"><h2>上传图片进行分析</h2><p>选择一张凝集裁片，查看分类结果和患病概率。</p><button class="text-btn" id="overviewUpload" type="button">上传图片</button></div>
+              <div class="hero-orbit" aria-hidden="true">
+                <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+                <div class="orbit-core">
+                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                    <path d="M24 40V24L12 12M24 24L36 12" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                    <circle cx="8" cy="8" r="4" fill="#d7f0e7"/>
+                    <circle cx="40" cy="8" r="4" fill="#d7f0e7"/>
+                  </svg>
+                </div>
+              </div>
             </article>
             <div class="metric-stack">
               <div class="metric-card accent"><span>测试准确率</span><strong>98.11%</strong></div>

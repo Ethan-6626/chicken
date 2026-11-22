@@ -33,6 +33,10 @@ async function checkBackend() {
 
 document.querySelectorAll('.nav-item').forEach((item) => item.addEventListener('click', () => showSection(item.dataset.section)));
 document.querySelectorAll('.jump-predict').forEach((button) => button.addEventListener('click', () => showSection('predict')));
+$('overviewUpload').addEventListener('click', () => {
+  showSection('predict');
+  $('fileInput').click();
+});
 
 function setFile(file) {
   if (!file || !file.type.startsWith('image/')) {
