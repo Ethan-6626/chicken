@@ -1,4 +1,4 @@
-const state = { file: null, previewUrl: null };
+let selectedFiles = [];
 const threshold = 0.575848937;
 // GitHub Pages 通过这个地址调用服务器上的真实模型；部署到其他环境时可覆盖 window.API_BASE_URL。
 const API_BASE_URL = window.API_BASE_URL || 'https://gx10-aeef.tail1f6601.ts.net';
@@ -38,87 +38,71 @@ $('overviewUpload').addEventListener('click', () => {
   $('fileInput').click();
 });
 
-function setFile(file) {
-  if (!file || !file.type.startsWith('image/')) {
-    showToast('请选择 JPG、PNG 或 WebP 图片');
-    return;
-  }
-  state.file = file;
-  if (state.previewUrl) URL.revokeObjectURL(state.previewUrl);
-  state.previewUrl = URL.createObjectURL(file);
-  $('fileName').textContent = file.name;
-  $('previewImage').src = state.previewUrl;
-  $('previewName').textContent = file.name;
-  $('previewMeta').textContent = `${(file.size / 1024).toFixed(1)} KB · ${file.type.split('/')[1].toUpperCase()}`;
-  $('dropzone').classList.add('hidden');
-  $('previewWrap').classList.remove('hidden');
-  $('analyzeBtn').disabled = false;
-  $('resultEmpty').classList.remove('hidden');
-  $('resultContent').classList.add('hidden');
-  $('resultSub').textContent = '图片已就绪，可以开始分析';
-  $('resultTag').textContent = 'READY';
+function selectFiles(files) {
+  if ($('fileInput').disabled || !files.length) return;
+  const supported = ['image/jpeg', 'image/png', 'image/webp'];
+  selectedFiles = Array.from(files).filter(file =>
+    supported.includes(file.type) && file.size > 0 && file.size <= 10 * 1024 * 1024
+  );
+  const skipped = files.length - selectedFiles.length;
+  $('fileName').textContent = `已选择 ${selectedFiles.length} 张${skipped ? `，跳过 ${skipped} 张格式或大小不符合要求的图片` : ''}`;
+  $('analyzeBtn').disabled = !selectedFiles.length;
+  $('predictionRows').replaceChildren();
+  $('resultSub').textContent = selectedFiles.length ? '等待开始预测' : '请选择有效图片';
 }
 
-$('fileInput').addEventListener('change', (event) => setFile(event.target.files[0]));
-['dragenter', 'dragover'].forEach((eventName) => $('dropzone').addEventListener(eventName, (event) => { event.preventDefault(); $('dropzone').classList.add('dragover'); }));
-['dragleave', 'drop'].forEach((eventName) => $('dropzone').addEventListener(eventName, (event) => { event.preventDefault(); $('dropzone').classList.remove('dragover'); }));
-$('dropzone').addEventListener('drop', (event) => setFile(event.dataTransfer.files[0]));
-$('removeFile').addEventListener('click', () => {
-  state.file = null;
+$('fileInput').addEventListener('change', event => selectFiles(event.target.files));
+$('dropzone').addEventListener('dragover', event => event.preventDefault());
+$('dropzone').addEventListener('drop', event => {
+  event.preventDefault();
+  if ($('fileInput').disabled || !event.dataTransfer.files.length) return;
   $('fileInput').value = '';
-  $('dropzone').classList.remove('hidden');
-  $('previewWrap').classList.add('hidden');
-  $('analyzeBtn').disabled = true;
-  $('resultEmpty').classList.remove('hidden');
-  $('resultContent').classList.add('hidden');
-  $('fileName').textContent = '未选择文件';
-  $('resultSub').textContent = '等待上传图片';
-  $('resultTag').textContent = 'IDLE';
+  selectFiles(event.dataTransfer.files);
 });
 
-function demoProbability(file) {
-  const name = file.name.toLowerCase();
-  if (/(normal|阴性|假阳性)/.test(name)) return 0.5928;
-  if (/(diseased|阳性|强阳性|弱阳性)/.test(name)) return 0.92;
-  let hash = 0;
-  for (const char of `${file.name}${file.size}`) hash = (hash * 31 + char.charCodeAt(0)) % 1000;
-  return 0.62 + (hash / 1000) * 0.33;
-}
-
-async function requestPrediction(file) {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/predict`, { method: 'POST', body: (() => { const form = new FormData(); form.append('file', file); return form; })() });
-    if (!response.ok) throw new Error('API unavailable');
-    const data = await response.json();
-    return { probability: Number(data.diseased_probability ?? data.probability), mode: '后端模型' };
-  } catch (_) {
-    return { probability: demoProbability(file), mode: '演示推理' };
-  }
+function formatDuration(ms) {
+  return ms < 1000 ? `${Math.round(ms)} ms` : `${(ms / 1000).toFixed(2)} s`;
 }
 
 async function analyze() {
-  if (!state.file) return;
+  const input = $('fileInput');
   const button = $('analyzeBtn');
-  button.disabled = true;
-  button.innerHTML = '分析中… <span>↻</span>';
-  $('resultTag').textContent = 'RUNNING';
-  $('resultSub').textContent = '正在计算患病概率';
-  const result = await requestPrediction(state.file);
-  const probability = Math.max(0, Math.min(1, result.probability));
-  const diseased = probability >= threshold;
-  $('resultEmpty').classList.add('hidden');
-  $('resultContent').classList.remove('hidden');
-  $('resultTag').textContent = 'DONE';
-  $('resultSub').textContent = '已完成一次图片推理';
-  $('resultBadge').classList.toggle('diseased', diseased);
-  $('resultIcon').textContent = diseased ? '!' : '✓';
-  $('resultLabel').textContent = diseased ? '患病状态' : '正常状态';
-  $('probabilityValue').textContent = `${(probability * 100).toFixed(2)}%`;
-  $('probabilityBar').style.width = `${probability * 100}%`;
-  $('inferenceMode').textContent = result.mode;
-  button.disabled = false;
-  button.innerHTML = '重新分析 <span>↻</span>';
-  showToast(result.mode === '演示推理' ? '已显示演示预测结果，可接入后端模型替换' : '后端模型分析完成');
+  if (input.disabled || !selectedFiles.length) return;
+  input.disabled = button.disabled = true;
+  const rows = $('predictionRows');
+  rows.replaceChildren();
+  const batchStart = performance.now();
+  let succeeded = 0;
+  for (const [index, file] of selectedFiles.entries()) {
+    $('resultSub').textContent = `正在预测 ${index + 1} / ${selectedFiles.length}`;
+    const started = performance.now();
+    let label = '预测失败';
+    let score = '—';
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const response = await fetch(`${API_BASE_URL}/api/predict`, {
+        method: 'POST', body: form, signal: AbortSignal.timeout(30000),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      const probability = data.diseased_probability;
+      if (!Number.isFinite(probability) || probability < 0 || probability > 1) {
+        throw new Error('无效概率');
+      }
+      label = probability >= (data.threshold ?? threshold) ? '患病状态' : '正常状态';
+      score = `${(probability * 100).toFixed(2)}%`;
+      succeeded++;
+    } catch (error) {
+      label = `预测失败（${error.message}）`;
+    }
+    const row = rows.insertRow();
+    for (const value of [file.name, label, score, formatDuration(performance.now() - started)]) {
+      row.insertCell().textContent = value;
+    }
+  }
+  $('resultSub').textContent = `成功 ${succeeded} / ${selectedFiles.length} 张 · 批次总耗时 ${formatDuration(performance.now() - batchStart)}`;
+  input.disabled = button.disabled = false;
 }
 
 $('analyzeBtn').addEventListener('click', analyze);
